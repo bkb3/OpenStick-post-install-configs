@@ -94,7 +94,7 @@ sudo passwd root
 # 3. Explicitly verify the account is mapped to the sudo group
 sudo usermod -aG sudo user
 
-# 4. Review or edit sudo privilege rules if you want to enforce password challenges ( by removeing NOPASSWD: to the output of command below so it should look like user ALL=(ALL:ALL) ALL )
+# 4. Review or edit sudo privilege rules if you want to enforce password challenges ( by removing NOPASSWD: to the output of command below so it should look like user ALL=(ALL:ALL) ALL )
 
 sudo visudo /etc/sudoers.d/user
 
@@ -209,3 +209,6 @@ Because you regenerated unique SSH host keys and altered the identity map, your 
 ssh-keygen -R openstick0.local
 ssh user@openstick0.local
 ```
+
+You can now install lightweight utilities like [Pi-hole](https://pi-hole.net/) or [tailscale](https://tailscale.com/). 
+
