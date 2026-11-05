@@ -35,11 +35,87 @@ sudo nmcli device wifi list
 sudo nmcli dev wifi connect "YOUR_WIFI_NAME" password "YOUR_WIFI_PASSWORD"
 ```
 
-> ⚠️ **Safety Note:** Avoid disabling or downing the USB network interface (`usb0`). If your Wi-Fi credentials change or fail, the physical USB tether is your only fallback access method. If you lose access entirely, you must press the hardware reset button on the stick while plugging it into your computer, check detection with `fastboot devices`, drop into emergency download mode via `fastboot oem reboot-edl`, and completely re-flash the base OpenStick image.
+> ⚠️ **Safety Note:** Avoid disabling or downing the USB network interface (`usb0`). If your Wi-Fi credentials change or fail, the physical USB tether is your only fallback access method. If you lose access entirely, you must press the hardware reset button on the stick while plugging it into your computer, check detection with `fastboot devices`, drop into emergency download mode via `fastboot oem reboot-edl`, and completely re-flash the base OpenStick image.  To avoid that scenario, you may also use the following fallback which enables default hotspot only if the stick cannot connect to your WiFi. 
 
 ---
 
-## 2. Package Updates & Essential Tooling
+## 2. Automated Wi-Fi Hotspot Fallback (Headless Safety Net)
+
+If your home Wi-Fi credentials change, or if you take your OpenStick travelling, it will lose connectivity. This configuration sets up a native `systemd` background service that monitors the network on boot. If the stick fails to connect to your home Wi-Fi within 45 seconds, it automatically spins up your custom emergency hotspot so you never get locked out.
+
+### 1. Create the Fallback Execution Script
+```bash
+sudo nano /usr/local/bin/wifi-fallback.sh
+```
+
+**Paste the following inside the file (replace `YOUR_HOME_WIFI_NAME` with your actual Wi-Fi SSID):**
+```bash
+#!/bin/bash
+# Allow the stick up to 45 seconds to attempt latching onto home Wi-Fi
+sleep 45
+
+# Check if wlan0 has a valid IP address
+if ! ip addr show wlan0 | grep -q "inet "; then
+    echo "Home Wi-Fi not found or failed. Activating emergency hotspot..."
+    # Take down the active home Wi-Fi profile attempts
+    sudo nmcli connection down "YOUR_HOME_WIFI_NAME"
+    # Instantly fire up the backup hotspot
+    sudo nmcli connection up hotspot
+else
+    echo "Home Wi-Fi connected successfully. Hotspot fallback skipped."
+fi
+```
+*Press `Ctrl + O` then `Enter` to save, and `Ctrl + X` to exit.*
+
+```bash
+# Make the file executable so the system can execute it
+sudo chmod +x /usr/local/bin/wifi-fallback.sh
+```
+
+### 2. Create the systemd Service Descriptor
+```bash
+sudo nano /etc/systemd/system/wifi-fallback.service
+```
+
+**Paste the following configuration exactly as shown:**
+```text
+[Unit]
+Description=Emergency Wi-Fi Hotspot Fallback Service
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wifi-fallback.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+*Press `Ctrl + O` then `Enter` to save, and `Ctrl + X` to exit.*
+
+### 3. Load, Enable, and Test the Service
+```bash
+# 1. Force systemd to scan the disk for the new service file
+sudo systemctl daemon-reload
+
+# 2. Instruct the OS to register this service to run automatically on every boot
+sudo systemctl enable wifi-fallback.service
+
+# 3. Test run the service manually to verify there are no syntax errors
+sudo systemctl start wifi-fallback.service
+```
+
+### 4. Review Service Status & Maintenance Logs
+To audit what the service decided to do during boot (whether it skipped or triggered the AP fallback), view its logs:
+```bash
+sudo journalctl -u wifi-fallback.service
+```
+
+
+---
+
+## 3. Package Updates & Essential Tooling
 
 Ensure the system package databases are updated, core security patches are applied, and core utilities are installed.
 
@@ -56,7 +132,7 @@ sudo apt install -y fastfetch nano zram-tools avahi-daemon
 
 ---
 
-## 3. Flash Storage Protection (Log Minimization)
+## 4. Flash Storage Protection (Log Minimization)
 
 To prevent the internal eMMC flash chip from wearing out due to constant system write actions, force system logs to reside strictly inside volatile RAM.
 
@@ -80,7 +156,7 @@ sudo systemctl restart systemd-journald
 
 ---
 
-## 4. Credential Lockdowns & Hostname Mapping
+## 5. Credential Lockdowns & Hostname Mapping
 
 Eliminate the weak default credentials (`user` / `1`) and establish a custom hostname so the stick can be targeted locally via `.local` naming.
 
@@ -117,7 +193,7 @@ sudo systemctl enable --now avahi-daemon
 
 ---
 
-## 5. SSH Host Cryptographic Key Regeneration
+## 6. SSH Host Cryptographic Key Regeneration
 
 Because standard factory images ship with identical default SSH host identification profiles, purge them entirely so your stick generates unique security hashes.
 
@@ -134,7 +210,7 @@ sudo systemctl restart ssh
 
 ---
 
-## 6. Memory Space Compression Engine (Zram Setup)
+## 7. Memory Space Compression Engine (Zram Setup)
 
 Configure the system compressed swap container to take up 100% of the total RAM footprint, accelerating system throughput without degrading the eMMC storage.
 
@@ -161,7 +237,7 @@ sudo swapon --show
 
 ---
 
-## 7. Storage Maps Alignment & Partition Expansion
+## 8. Storage Maps Alignment & Partition Expansion
 
 Correct the raw image flashing layout boundaries by realigning the partition map tracking headers to clear out the GPT PMBR size mismatch warning.
 
@@ -187,7 +263,7 @@ sudo resize2fs /dev/mmcblk0p14
 
 ---
 
-## 8. Final System Maintenance & Remote Headless Launch
+## 9. Final System Maintenance & Remote Headless Launch
 
 Clean up installation cache leftovers to reclaim valuable eMMC space, then drop power cleanly so the device can run autonomously from a USB power brick.
 
