@@ -7,8 +7,8 @@ This guide contains the sequence of commands and configurations required to safe
 Once the OpenStick flash is successful, you can either keep your device plugged in via USB or connect to its built-in Wi-Fi network (typically named `Openstick` with password `openstick`) for initial configuration.
 
 You can establish the initial connection using:
-* **USB Interface:** `ssh user@192.168.4.1`
-* **Wi-Fi Interface:** `ssh user@192.168.5.1`
+* **USB Interface:** `ssh user@192.168.5.1`
+* **Wi-Fi Interface:** `ssh user@192.168.4.1`
 * **Default Password:** `1`
 
 ---
@@ -41,7 +41,7 @@ sudo nmcli dev wifi connect "YOUR_WIFI_NAME" password "YOUR_WIFI_PASSWORD"
 
 ## 2. Automated Wi-Fi Hotspot Fallback (Headless Safety Net)
 
-If your home Wi-Fi credentials change, or if you take your OpenStick travelling, it will lose connectivity. This configuration sets up a native `systemd` background service that monitors the network on boot. If the stick fails to connect to your home Wi-Fi within 45 seconds, it automatically spins up your custom emergency hotspot so you never get locked out.
+If your home Wi-Fi credentials change, or if you take your OpenStick travelling, it will lose connectivity. This configuration sets up a native `systemd` background service that monitors the network on *boot*. If the stick fails to connect to your home Wi-Fi within 45 seconds, it automatically spins up your custom emergency hotspot so you never get locked out.
 
 ### 1. Create the Fallback Execution Script
 ```bash
