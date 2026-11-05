@@ -41,7 +41,7 @@ sudo nmcli dev wifi connect "YOUR_WIFI_NAME" password "YOUR_WIFI_PASSWORD"
 
 ## 2. Automated Wi-Fi Hotspot Fallback (Headless Safety Net)
 
-If your home Wi-Fi credentials change, or if you take your OpenStick travelling, it will lose connectivity. This configuration sets up a native `systemd` background service that monitors the network on *boot*. If the stick fails to connect to your home Wi-Fi within 45 seconds, it automatically spins up your custom emergency hotspot so you never get locked out.
+If your home Wi-Fi credentials change, or if you take your OpenStick travelling, it will lose connectivity. This configuration sets up a native `systemd` background service that monitors the network on **boot**. If the stick fails to connect to your home Wi-Fi within 45 seconds, it automatically spins up your custom emergency hotspot so you never get locked out.
 
 ### 1. Create the Fallback Execution Script
 ```bash
