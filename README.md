@@ -35,7 +35,7 @@ sudo nmcli device wifi list
 sudo nmcli dev wifi connect "YOUR_WIFI_NAME" password "YOUR_WIFI_PASSWORD"
 ```
 
-> ⚠️ **Safety Note:** Avoid disabling or downing the USB network interface (`usb0`). If your Wi-Fi credentials change or fail, the physical USB tether is your only fallback access method. If you lose access entirely, you must press the hardware reset button on the stick while plugging it into your computer, check detection with `fastboot devices`, drop into emergency download mode via `fastboot oem reboot-edl`, and completely re-flash the base OpenStick image.  To avoid that scenario, you may also use the following fallback which enables default hotspot only if the stick cannot connect to your WiFi. 
+> ⚠️ **Safety Note:** Avoid disabling or downing the USB network interface (`usb0`). If your Wi-Fi credentials change or fail, the physical USB tether is your only fallback access method. If you lose access entirely, you can also try to plugin to your device through USB, then find the TTY interface by checking `ls /dev/cu.*`. The OpenStick usually shows as `/dev/cu.usbmodemXXXX`. Then `screen /dev/cu.usbmodemXXXX 115200` will get you the root shell, where you can try changing the Wi-Fi credentials. If that somehow fails for eg. when you changed the role from gadget to host mode, you must press the hardware reset button on the stick while plugging it into your computer, check detection with `fastboot devices`, drop into emergency download mode via `fastboot oem reboot-edl`, and completely re-flash the base OpenStick image.  To avoid that scenario, you may also use the following fallback which enables default hotspot only if the stick cannot connect to your WiFi. 
 
 ---
 
